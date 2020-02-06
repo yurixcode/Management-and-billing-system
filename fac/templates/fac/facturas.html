@@ -1,0 +1,366 @@
+{% extends 'base/base.html' %}
+
+{% block page_content %}
+<form method="POST" id="frmFacturas">
+    {% csrf_token %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <a href="#" class="btn btn-danger">Guardar</a>
+        <a href="{% url 'fac:factura_imprimir_one' enc.id %}" class="btn btn-success" target="_factura">Imprimir</a>
+        <a href="{% url 'fac:factura_list' %}" class="btn btn-info">Cancelar</a>
+    </div>
+    <div class="card-body">
+        <div class="content">
+            <!-- Sección Superior -->
+            <div class="row">
+                <!-- Sección Izquierda -->
+                <div class="col-lg-6 col-md-12 form-group">
+                    <div class="content">
+                        <div class="row ">
+                            <div class="col-lg-1">No.:</div>
+                            <div class="col-lg-4">
+                                <input type="text" name="enc_id" id="enc_id" readonly class="form-control">
+                            </div>
+                            <div class="col-lg-2">
+                                Cliente:
+                            </div>
+                            <div class="col-lg-5 form-group">
+                                <select name="enc_cliente" id="enc_cliente" class="form-control">
+                                    <option value="0">Seleccione Cliente</option>
+                                    {% for item in clientes %}
+                                        <option value="{{item.id}}">{{ item.nombres }} {{item.apellidos}} </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-lg-6 p-2" >
+                                <div class="row">
+                                    <div class="col-lg-2">
+                                        Fecha:
+                                    </div>
+                                    <div class="col-lg-8 form-group">
+                                        <input type="text" name="fecha" id="fecha" class="form-control form-control-user" 
+                                        value="{{ enc.fecha|date:'Y-m-d' }}" readonly />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 p-2 form-group">
+                                <div class="row">
+                                    <div class="col-lg-3">Sub Total:</div>
+                                    <div class="col-lg-8">
+                                        <input type="number" class="form-control text-right" value="0.00" readonly
+                                        name="sub_total" id="sub_total">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-3">Descuento:</div>
+                                    <div class="col-lg-8">
+                                        <input type="number" class="form-control text-right" value="0.00" disabled
+                                            name="descuento" id="descuento">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-3">Total:</div>
+                                    <div class="col-lg-8">
+                                        <input type="number" class="form-control text-right" value="0.00" disabled
+                                            name="total" id="total">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Fin Sección Izquierda -->
+
+
+                <!-- Sección Derecha -->
+                <div class="col-lg-6 col-md-12 from-group">
+                    <div class="row p-2">
+                        <div class="col-lg-1">Cod</div>
+                        <div class="col-lg-3">
+                            <input type="text" class="form-control" name="codigo" id="codigo" placeholder="Cód. Producto">
+                        </div>
+                        <div class="col-lg-7">
+                            <input type="text" class="form-control" name="descripcion" id="descripcion" placeholder="Descripción" disabled>
+                        </div>
+                        <div class="col-lg-1">
+                            <button type="button" class="btn btn-info" id="btnBuscar">
+                                <i class="fab fa-searchengin"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-1">Cant</div>
+                        <div class="col-lg-3">
+                            <input type="number" class="form-control" name="cantidad" id="cantidad" placeholder="Cantidad">
+                        </div>
+                        <div class="col-lg-4">
+                            <input type="number" class="form-control" name="precio" id="precio" placeholder="Precio" readonly>
+                        </div>
+                        <div class="col-lg-3">
+                            <input type="number" class="form-control" name="descuento_detalle" id="descuento_detalle" placeholder="Descuento">
+                        </div>
+                        <div class="col-lg-1">
+                            <button type="submit" class="btn btn-danger" id="btnGuardar"> <i class="far fa-plus-square"></i> </button>
+                        </div>
+                    </div>
+                    <div class="row p-1">
+                        <div class="col-lg-9 text-right">Sub Total</div>
+                        <div class="col-lg-3">
+                            <input class="form-control" type="number" name="sub_total_detalle" id="sub_total_detalle" placeholder="Sub Total" value="0.00" disabled>
+                        </div>
+                    </div>
+                    <div class="row p-1">
+                        <div class="col-lg-9 text-right">Total</div>
+                        <div class="col-lg-3">
+                            <input type="number" name="total_detalle" id="total_detalle" class="form-control" placeholder="Total" value="0.00" disabled>
+                        </div>
+                    </div>
+                </div>
+                <!-- Fin Sección Derecha -->
+            </div>
+            <!-- Fin Sección Superior -->
+            <!-- Inicio Detalle -->
+            <hr>
+            <div class="row p-1">
+                <div class="col-lg-12">
+                    <table
+                        data-toggle="table"
+                        data-pagination="true"
+                        data-search="true"
+                        data-show-columns="true"
+                        data-show-toggle="true"
+                        data-show-fullscreen="true"
+                        data-locale="es-ES"
+                        >
+                        <thead>
+                            <th data-sortable="true" data-field="id">Id.</th>        
+                            <th data-sortable="true" data-field="codigo">Código</th>
+                            <th data-sortable="true" data-field="descripcion">Descripción</th>
+                            <th data-field="cantidad">Cant</th>
+                            <th data-field="subtotal">S. Total</th>
+                            <th data-field="descuento">Des.</th>
+                            <th data-field="total">Total</th>
+                            <th class="all">Acciones</th>
+                        </thead>
+                        <tbody>
+                            {% for item in det %}
+                            <tr>
+                            <td>{{ item.id }}</td>
+                            <td>{{ item.producto }}</td>
+                            <td>{{ item.producto.descripcion }}</td>
+                            <td>{{ item.cantidad }}</td>
+                            <td>{{ item.sub_total }}</td>
+                            <td>{{ item.descuento }}</td>
+                            <td>{{ item.total }}</td>
+                            <td>
+                                <button type="button" class="btn btn-warning btn-circle"
+                                onclick="borrarDetalle({{ item.id }})"><i class="fas fa-history"></i></button>
+                            </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- Fin Detalle -->
+        </div>
+    </div>
+</div>
+</form>
+{% endblock %}
+{% block js_page %}
+<script>
+
+    function calcular_detalle() {
+        var cant, prec, desc, stotal, total
+
+        cant = $('#cantidad').val();
+        cant = cant==='' ? 0 : +cant;
+        cant = cant <0 ? 0 : cant;
+
+        prec = $('#precio').val();
+        prec = prec==='' ? 0 : +prec;
+        prec = prec <0 ? 0 : prec;
+
+        desc = $('#descuento_detalle').val();
+        desc = desc==='' ? '¿Descuento?' : +desc;
+        desc = desc <0 ? 0 : desc;
+
+        desc = desc > (cant * prec) ? 0 : desc;
+
+        stotal = cant * prec;
+        total = stotal - desc;
+
+        $('#cantidad').val(cant);
+        $('#precio').val(prec);
+        $('#descuento_detalle').val(desc);
+
+        $('#sub_total_detalle').val(stotal);
+        $('#total_detalle').val(total)
+
+        console.log('Cantidad ' + cant);
+        console.log('Precio ' + prec);
+        console.log('Descuento ' + desc);
+
+        console.log('sub_total_detalle ' + $('#sub_total_detalle').val());
+        console.log('total_detalle ' + $('#total_detalle').val());        
+        
+    }
+
+    function buscarProducto(){
+        if ($('#enc_cliente').val()==='0' || $('#enc_cliente').val()===null) {
+            mensaje('Cliente no seleccionado', 'red');
+            return false;
+        }
+        var codigo = $('#codigo').val();
+        if(codigo===''){
+            return false;
+        }
+        var path = "{% url 'api:producto_list' %}" + codigo;
+        $.ajax({
+            type: 'GET',
+            url: path,
+            success: function(r){
+                console.log(r);
+                console.log(r.existencia);
+                console.log(r.estado);
+
+                if(r.existencia <= 0 || !r.estado) {
+                    mensaje('El producto escogido no tiene existencias o está inactivo', 'orange')
+                    $('#codigo').val('');
+                    $('#descripcion').val('');
+                    $('#precio').val('0.00');
+                    $('#codigo').focus();
+                    return false;
+                }
+
+                $('#codigo').val(r.codigo);
+                $('#descripcion').val(r.descripcion);
+                $('#precio').val(r.precio);
+                $('#cantidad').focus();
+            },
+            error: function(a, b, c) {
+                console.log(a);
+                console.log(b);
+                console.log(c);
+                if(a.status==404){
+                    mensaje('Producto -' + codigo + '. No encontrado o No existe. Por favor, inténtelo de nuevo...', 'red');
+                    $('#codigo').val('');
+                    $('#descripcion').val('');
+                    $('#precio').val('0.00');
+                    $('#codigo').focus();
+
+                }
+                
+            }
+        });
+
+    
+    };
+
+    $(function () {
+        $("#sidebarToggle").click();
+        $('#enc_cliente').select2({
+            placeholder: "Seleccione Cliente",
+            allowClear: true
+        });
+        $('#btnBuscar').click(function(e) {
+            if($('#enc_cliente').val()==='0'){
+                $('#enc_cliente').select();
+                $('#enc_cliente').focus();
+                mensaje('Por favor, selecciona un Cliente', 'red');
+                return false;
+            }
+            abrir_modal('{% url 'fac:factura_producto' %}')
+        });
+
+        $('#codigo').keypress(function(e){
+            // El número 13 es ENTER
+            if(e.keyCode===13){
+                e.preventDefault();
+                buscarProducto();
+            }
+        });
+        
+        // Con CHANGE, cada vez que detecte un cambio, ejecutará la secuencia.
+        $('#cantidad, #precio, #descuento_detalle').change(function(){
+            calcular_detalle();
+        });
+
+        $('#enc_id').val('{{ enc.id }}');
+        $('#enc_cliente').val('{{ enc.cliente.id }}').change();
+        $('#fecha').val("{{ enc.fecha|date:'Y-m-d' }}");
+        $('#sub_total').val({{ enc.sub_total }});
+        $('#descuento').val({{ enc.descuento }});
+        $('#total').val({{ enc.total }});
+
+    });
+
+    function borrarDetalle(id) {
+        // mensaje(id);
+        $.confirm({
+            theme:'modern',
+            icon: 'fab fa-keycdn',
+            type: 'red',
+            title: 'Confirmación Requerida',
+            content: 'url:/fac/facturas/borrar-detalle/' + id,
+            onContentReady: function(){
+                var self = this;
+                this.$content.find('#usuario').val('{{ user.username }}')
+                this.$content.find('#usuario').select();
+                this.$content.find('#usuario').focus();
+            },
+            buttons: {
+                borrar: {
+                    text:'Borrar',
+                    btnClass:'btn btn-danger',
+                    action: function () {
+                        var usuario = this.$content.find('input#usuario');
+                        var pass = this.$content.find('input#password');
+
+                        if(!usuario.val().trim()) {
+                            mensaje('Por favor, ingresa un usuario', 'red');
+                            return false;
+                        }
+
+                        if(!pass.val().trim()) {
+                            mensaje('Por favor, ingresa una contraseña', 'red');
+                            return false;
+                        }
+                        var data = {'usuario': usuario.val(), 'pass': pass.val()};
+                        console.log(data);
+
+                        var token = '{{ csrf_token }}';
+                        $.ajax({
+                            headers: { 'X-CSRFToken': token },
+                            type: 'POST',
+                            data: data,
+                            url: '/fac/facturas/borrar-detalle/' + id,
+                            success: function(r) {
+                                console.log(r);
+                                if(r==='ok') {
+                                    location.reload(true);
+                                }else{
+                                mensaje(r, 'red')
+                                }
+                            },
+                            error: function (a, b, c) {
+                                mensaje(c, 'red');
+                            }
+                        });
+                        
+                    },
+                },
+                cancelar: {
+
+                }
+            }
+
+        });
+
+    }
+</script>
+{% endblock %}

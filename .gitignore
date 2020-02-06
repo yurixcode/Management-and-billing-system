@@ -1,0 +1,7 @@
+*.env
+.vscode
+*.jpg
+*.png
+*.pyc
+*.sqlite3
+entvirt
