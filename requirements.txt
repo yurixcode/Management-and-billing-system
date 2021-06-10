@@ -1,6 +1,6 @@
 astroid==2.3.3
 colorama==0.4.1
-Django==2.2
+Django==2.2.24
 django-userforeignkey==0.3.0
 djangorestframework==3.10.3
 html5lib==1.0.1
